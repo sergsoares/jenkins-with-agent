@@ -4,5 +4,8 @@ run:
 logs:
 	docker compose logs
 
-recreate:
+restart:
+	docker compose down -v
 	docker compose up -d --remove-orphans --build
+
+recreate: restart logs
