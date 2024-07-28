@@ -1,0 +1,40 @@
+services:
+  controller:
+    build:
+     context: ./jenkins
+    environment:
+      JAVA_OPTS: -Djenkins.install.runSetupWizard=false
+      JENKINS_ADMIN_ID: admin
+      JENKINS_ADMIN_PASSWORD: jenkinstest
+      CASC_JENKINS_CONFIG: /var/jenkins_conf/
+    ports:
+      - 80:8080
+      - 50000:50000
+    volumes:
+      - ./jenkins/casc.yaml:/var/jenkins_conf/casc.yaml
+  agent:
+    build:
+      context: .
+      dockerfile_inline: |
+        ARG SSH_AGENET_TAG=jdk21
+        FROM jenkins/ssh-agent:$${SSH_AGENET_TAG}
+        ARG DOCKER_CE_CLI_VERSION=5:25.0.1-1~debian.12~bookworm
+        RUN apt-get update \
+            && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+                ca-certificates \
+                curl \
+                lsb-release \
+            && rm -rf /var/lib/apt/lists/*
+        RUN curl -fsSLo /usr/share/keyrings/docker-archive-keyring.asc https://download.docker.com/linux/debian/gpg
+        RUN echo "deb [arch=$(dpkg --print-architecture) \
+                  signed-by=/usr/share/keyrings/docker-archive-keyring.asc] \
+                  https://download.docker.com/linux/debian \
+                  $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
+        RUN apt-get update \
+            && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+                docker-ce-cli=$${DOCKER_CE_CLI_VERSION} \ 
+            && rm -rf /var/lib/apt/lists/*
+    environment:
+      - JENKINS_AGENT_SSH_PUBKEY=ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCl17uFJ7GEzN9uVARaKn1nihxT+JUoScspUTEk83+XENmDtOumUA8Foved2fB4AuYkh7bz6vTolM2UYeDyU3YnM3DPLfJJl5hRM7g5nlgZDAQFBUWk1xHWhvjSdJn75fv2FY1ilhN2gRanhGn9Lp/r90oxxydTM+u7gPtaOTE/AKcc1TTY1b/89hBa2ELFo34u9ctUacpQox3eIMmvIVlTKoFe6Tt2/CEmxEUUYdr/fb0gr57k48tBxn1/gdvbo54j/zBzrXWiJm4LvyyhZMqRhL4WSza+WIx1EPbm5+kuXe5x5G6FOyckxp8QXhKZxjA5e/tSsziD+XkV2wqIHbg1 creatiwww@Marias-MacBook-Pro.local
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock

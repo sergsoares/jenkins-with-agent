@@ -1,0 +1,80 @@
+jenkins:
+  numExecutors: 0
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+       - id: ${JENKINS_ADMIN_ID}
+         password: ${JENKINS_ADMIN_PASSWORD}
+  authorizationStrategy:
+    globalMatrix:
+      permissions:
+        # <permission-group>/<permission-name>:<role>
+        - "Overall/Administer:admin"
+        - "Overall/Read:authenticated"
+# Without the Agent to Controller Security Subsystem, the agent is able to instruct
+# the controller to execute any actions it requests, which may be undesirable.
+  remotingSecurity:
+    enabled: true
+#  jobs should be ran using the same Jenkins user that configured or triggered it.
+  nodes:
+    - permanent:
+        labelString: "docker"
+        mode: NORMAL
+        name: "agent-1"
+        remoteFS: "/home/jenkins"
+        # remoteFS: "/var/lib/jenkins"
+        launcher:
+          SSH:
+            host: agent
+            port: 22
+            credentialsId: agent_ssh_key
+            launchTimeoutSeconds: 60
+            maxNumRetries: 3
+            retryWaitTime: 30
+security:
+  queueItemAuthenticator:
+    authenticators:
+    - global:
+        strategy: triggeringUsersAuthorizationStrategy
+jobs:
+  - file: /var/jobdsl/job.groovy
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - basicSSHUserPrivateKey:
+              scope: SYSTEM
+              id: agent_ssh_key
+              username: jenkins
+              description: "SSH private key file for agent node"
+              privateKeySource:
+                directEntry:
+                  privateKey: |
+                    -----BEGIN OPENSSH PRIVATE KEY-----
+                    b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABFwAAAAdzc2gtcn
+                    NhAAAAAwEAAQAAAQEApde7hSexhMzfblQEWip9Z4ocU/iVKEnLKVExJPN/lxDZg7TrplAP
+                    BaL3ndnweALmJIe28+r06JTNlGHg8lN2JzNwzy3ySZeYUTO4OZ5YGQwEBQVFpNcR1ob40n
+                    SZ++X79hWNYpYTdoEWp4Rp/S6f6/dKMccnUzPru4D7WjkxPwCnHNU02NW//PYQWthCxaN+
+                    LvXLVGnKUKMd3iDJryFZUyqBXuk7dvwhJsRFFGHa/329IK+e5OPLQcZ9f4Hb26OeI/8wc6
+                    11oiZuC78soWTKkYS+Fks2vliMdRD25ufpLl3uceRuhTsnJMafEF4SmcYwOXv7UrM4g/l5
+                    FdsKiB24NQAAA9jhrsCj4a7AowAAAAdzc2gtcnNhAAABAQCl17uFJ7GEzN9uVARaKn1nih
+                    xT+JUoScspUTEk83+XENmDtOumUA8Foved2fB4AuYkh7bz6vTolM2UYeDyU3YnM3DPLfJJ
+                    l5hRM7g5nlgZDAQFBUWk1xHWhvjSdJn75fv2FY1ilhN2gRanhGn9Lp/r90oxxydTM+u7gP
+                    taOTE/AKcc1TTY1b/89hBa2ELFo34u9ctUacpQox3eIMmvIVlTKoFe6Tt2/CEmxEUUYdr/
+                    fb0gr57k48tBxn1/gdvbo54j/zBzrXWiJm4LvyyhZMqRhL4WSza+WIx1EPbm5+kuXe5x5G
+                    6FOyckxp8QXhKZxjA5e/tSsziD+XkV2wqIHbg1AAAAAwEAAQAAAQAjhVqHwaG3FP6CLgKk
+                    oVcs1xsMLUEdWPjnx5kkFfdtDtHX8OdMPveIuIgayjREMDLE/kCEa/261yxVLMW2gYPcD5
+                    uI9Ilhk9OvCMnbpXuvGbC+totdLCeI8G3Y/dqBZpgZ9DHNPOG8TxfgF29wKA1eyB+fG83j
+                    d0p1ZcHwaDGREaVxFctggbEVPN1cTkwpdt551m943A4GNYhDEd2WXdmmM/Yiro41cNFyco
+                    dGWnJv2J1XG1hr/EYVYLqbRkx2DEi3yxqPA8arhEzxt4GHu1ujBKdZQx7sKtL/8Trnlrh5
+                    XDZlEgX5t5/1uwEcyW8WGsWqPgeeOo9rZPvPR8f/XOjdAAAAgCqGlJI8i/s2PVWqbQOcpy
+                    0vt3EguEnDRiEXYDeQNL1iXA10zViMn11IjaXvytNzEfExMu9uE/1vjoZtb24wBgpDEwKh
+                    /mwHHsKbwXToMdsucFHBtiJCF+WQnTMz7QxlLtrse5qVtwredpF9FOCY7CLj1y+o//QTBr
+                    O3LKnjyYj9AAAAgQDSIN9BTb/lTkGVbkjbvVH4c6aa70hBSIbIG4oRtxskhko2ys4+2emg
+                    oqrduQaNKr6vK28UMyrCtI7ylWUJy5kWGhvyUWCyLDGrMugCiqocm2q86m7SgoSFlLsXW+
+                    r89o9dreKjS5Iye1nhX94lBxv274XJts7JODL19Fv4oMq3CwAAAIEAygvuuIoZawPytsIc
+                    Bf65ljSb0UNFxny/aAFAIha1wqHqaC89Rnm+5z47VKEMGjH+aIMp+OptxBN8JwcOp6LI6s
+                    ZuK3A4//MC4wSHhETam1DT8pU14TEgnxKYBgJXUy9/Deyv8WtYpMG8bG1I1bVa8xL/2A7b
+                    veszUEL4PCOZ1b8AAAAiY3JlYXRpd3d3QE1hcmlhcy1NYWNCb29rLVByby5sb2NhbAE=
+                    -----END OPENSSH PRIVATE KEY-----
